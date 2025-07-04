@@ -1,23 +1,12 @@
 const express = require('express');
-const fs = require('fs');
 const app = express();
 const PORT = 8080;
+const {readFile, writeFile} = require('./fileManager');
 
 app.use(express.json());
 
 const productsPath = './products.json';
 const cartsPath = './carts.json';
-
-// Utilidades
-const readFile = (path) => {
-  if (!fs.existsSync(path)) return [];
-  const data = fs.readFileSync(path, 'utf-8');
-  return data ? JSON.parse(data) : [];
-};
-
-const writeFile = (path, data) => {
-  fs.writeFileSync(path, JSON.stringify(data, null, 2));
-};
 
 // ---------------------------
 // PRODUCTOS
