@@ -1,0 +1,21 @@
+<h1>Lista de productos</h1>
+
+<ul>
+  {{#each products}}
+    <li>{{this.title}} - ${{this.price}}</li>
+  {{/each}}
+</ul>
+
+<h2>Agregar producto</h2>
+<form action="/api/products" method="POST">
+  <label for="title">Título:</label>
+  <input type="text" name="title" id="title" required>
+
+  <label for="price">Precio:</label>
+  <input type="number" name="price" id="price" required>
+
+  <button type="submit">Agregar</button>
+</form>
+
+
+

@@ -1,4 +1,7 @@
 const express = require('express');
+
+const exphbs = require('express-handlebars');
+const path = require('path');
 const app = express();
 const PORT = 8080;
 const {readFile, writeFile} = require('./fileManager');
@@ -92,9 +95,31 @@ app.post('/api/carts/:cid/product/:pid', (req, res) => {
   res.json(cart);
 });
 
+//Configuracion de Handlebars
+app.engine('handlebars', exphbs.engine());
+app.set('view engine', 'handlebars');
+app.set('views', path.join(__dirname, 'views'));
+
+
+
 // ---------------------------
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
- 
+
+app.use(express.urlencoded({extended: true}));
+
+
+
+//rutas
+
+app.get('/home', (req, res) => { 
+  const products = readFile(productsPath);
+  res.render('home', {titulo: 'Lista de Productos:', products});
+});
+
+app.get('/realtimeproducts', (req, res) => {
+  const products = readFile(productsPath);
+  res.render('realTimeProducts', { products });
+});
