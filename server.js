@@ -7,6 +7,8 @@ const PORT = 8080;
 const {readFile, writeFile} = require('./fileManager');
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 const productsPath = './products.json';
 const cartsPath = './carts.json';
@@ -107,10 +109,6 @@ app.set('views', path.join(__dirname, 'views'));
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
-
-app.use(express.urlencoded({extended: true}));
-
-
 
 //rutas
 
