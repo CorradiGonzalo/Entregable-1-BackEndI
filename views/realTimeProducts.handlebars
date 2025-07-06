@@ -1,0 +1,57 @@
+<h1>Agregar producto</h1>
+
+<form id="productForm">
+  <label>Nombre:</label>
+  <input type="text" name="title" required>
+
+  <label>Precio:</label>
+  <input type="number" name="price" required>
+
+  <button type="submit">Agregar</button>
+</form>
+
+<h2>Productos existentes:</h2>
+<ul id="productList">
+  {{#each products}}
+    <li>{{this.title}} - ${{this.price}}</li>
+  {{/each}}
+</ul>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  // Enviar producto desde el formulario sin recargar
+  const form = document.getElementById('productForm');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const product = {
+      title: formData.get('title'),
+      price: formData.get('price')
+    };
+
+    const response = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product)
+    });
+
+    if (response.ok) {
+      form.reset();
+      socket.emit('newProduct'); // Avisamos al servidor que se agregó un producto
+    }
+  });
+
+  // Recibir productos actualizados y renderizarlos
+  socket.on('updateProducts', (products) => {
+    const ul = document.getElementById('productList');
+    ul.innerHTML = '';
+    products.forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = `${p.title} - $${p.price}`;
+      ul.appendChild(li);
+    });
+  });
+</script>
+

@@ -1,5 +1,30 @@
 [
   {
     "id": 1
+  },
+  {
+    "id": 2,
+    "title": "Celular",
+    "price": "15000"
+  },
+  {
+    "id": 3,
+    "title": "Notebook",
+    "price": "5000"
+  },
+  {
+    "id": 4,
+    "title": "Notebook",
+    "price": "5000"
+  },
+  {
+    "id": 5,
+    "title": "Notebook",
+    "price": "5000"
+  },
+  {
+    "id": 6,
+    "title": "Televisor",
+    "price": "25000"
   }
 ]

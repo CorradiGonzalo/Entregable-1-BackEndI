@@ -106,9 +106,23 @@ app.set('views', path.join(__dirname, 'views'));
 
 // ---------------------------
 
-app.listen(PORT, () => {
+const http = require('http');
+const server = http.createServer(app);
+
+const { Server } = require('socket.io');
+const io = new Server(server);
+
+// Escucha de conexiones websocket
+io.on('connection', (socket) => {
+  console.log('Cliente conectado:', socket.id);
+});
+
+// Iniciar servidor con WebSockets habilitados
+server.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+
 
 //rutas
 
