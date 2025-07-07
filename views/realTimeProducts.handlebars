@@ -11,7 +11,7 @@
 </form>
 
 <h2>Productos existentes:</h2>
-<ul id="productList">
+<ul id="product-list">
   {{#each products}}
     <li>{{this.title}} - ${{this.price}}</li>
   {{/each}}
@@ -21,7 +21,6 @@
 <script>
   const socket = io();
 
-  // Enviar producto desde el formulario sin recargar
   const form = document.getElementById('productForm');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -39,19 +38,16 @@
 
     if (response.ok) {
       form.reset();
-      socket.emit('newProduct'); // Avisamos al servidor que se agregó un producto
     }
   });
 
-  // Recibir productos actualizados y renderizarlos
   socket.on('updateProducts', (products) => {
-    const ul = document.getElementById('productList');
-    ul.innerHTML = '';
-    products.forEach(p => {
+    const list = document.getElementById('product-list');
+    list.innerHTML = '';
+    products.forEach(prod => {
       const li = document.createElement('li');
-      li.textContent = `${p.title} - $${p.price}`;
-      ul.appendChild(li);
+      li.textContent = `${prod.title} - $${prod.price}`;
+      list.appendChild(li);
     });
   });
 </script>
-

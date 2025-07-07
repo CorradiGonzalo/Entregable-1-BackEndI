@@ -26,5 +26,15 @@
     "id": 6,
     "title": "Televisor",
     "price": "25000"
+  },
+  {
+    "id": 7,
+    "title": "Walter Mini Power",
+    "price": "156000"
+  },
+  {
+    "id": 8,
+    "title": "Walter Power",
+    "price": "250000"
   }
 ]

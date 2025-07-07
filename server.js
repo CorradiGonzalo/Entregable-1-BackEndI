@@ -1,14 +1,14 @@
 const express = require('express');
+let io;
 
 const exphbs = require('express-handlebars');
 const path = require('path');
 const app = express();
 const PORT = 8080;
-const {readFile, writeFile} = require('./fileManager');
+const { readFile, writeFile } = require('./fileManager');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 
 const productsPath = './products.json';
 const cartsPath = './carts.json';
@@ -38,6 +38,9 @@ app.post('/api/products', (req, res) => {
   };
   products.push(newProduct);
   writeFile(productsPath, products);
+
+  io.emit('updateProducts', products);
+
   res.status(201).json(newProduct);
 });
 
@@ -55,6 +58,9 @@ app.delete('/api/products/:pid', (req, res) => {
   const products = readFile(productsPath);
   const updated = products.filter(p => p.id != req.params.pid);
   writeFile(productsPath, updated);
+
+  io.emit('updateProducts', updated);
+
   res.status(204).end();
 });
 
@@ -97,41 +103,45 @@ app.post('/api/carts/:cid/product/:pid', (req, res) => {
   res.json(cart);
 });
 
-//Configuracion de Handlebars
+// ---------------------------
+// HANDLEBARS
+// ---------------------------
+
 app.engine('handlebars', exphbs.engine());
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
-
-
+// ---------------------------
+// WEBSOCKET
 // ---------------------------
 
 const http = require('http');
 const server = http.createServer(app);
-
 const { Server } = require('socket.io');
-const io = new Server(server);
+io = new Server(server);
 
-// Escucha de conexiones websocket
 io.on('connection', (socket) => {
   console.log('Cliente conectado:', socket.id);
 });
 
-// Iniciar servidor con WebSockets habilitados
-server.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+// ---------------------------
+// RUTAS VISTAS
+// ---------------------------
 
-
-
-//rutas
-
-app.get('/home', (req, res) => { 
+app.get('/home', (req, res) => {
   const products = readFile(productsPath);
-  res.render('home', {titulo: 'Lista de Productos:', products});
+  res.render('home', { titulo: 'Lista de Productos:', products });
 });
 
 app.get('/realtimeproducts', (req, res) => {
   const products = readFile(productsPath);
   res.render('realTimeProducts', { products });
+});
+
+// ---------------------------
+// INICIO
+// ---------------------------
+
+server.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
