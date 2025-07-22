@@ -10,44 +10,23 @@
   <button type="submit">Agregar</button>
 </form>
 
+<h3>Eliminar producto</h3>
+<form id="deleteForm">
+  <label>ID del producto:</label>
+  <input type="text" name="id" required>
+  <button type="submit">Eliminar</button>
+</form>
+
 <h2>Productos existentes:</h2>
 <ul id="product-list">
   {{#each products}}
-    <li>{{this.title}} - ${{this.price}}</li>
+    <li>
+      <strong>{{this._id}}</strong> - {{this.title}} - ${{this.price}}
+    </li>
   {{/each}}
 </ul>
 
+<!-- Carga de Socket.IO + script externo -->
 <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
+<script src="/js/realTime.js"></script>
 
-  const form = document.getElementById('productForm');
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(form);
-    const product = {
-      title: formData.get('title'),
-      price: formData.get('price')
-    };
-
-    const response = await fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product)
-    });
-
-    if (response.ok) {
-      form.reset();
-    }
-  });
-
-  socket.on('updateProducts', (products) => {
-    const list = document.getElementById('product-list');
-    list.innerHTML = '';
-    products.forEach(prod => {
-      const li = document.createElement('li');
-      li.textContent = `${prod.title} - $${prod.price}`;
-      list.appendChild(li);
-    });
-  });
-</script>

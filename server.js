@@ -1,147 +1,137 @@
 const express = require('express');
-let io;
-
+const http = require('http');
+const { Server } = require('socket.io');
 const exphbs = require('express-handlebars');
 const path = require('path');
-const app = express();
-const PORT = 8080;
-const { readFile, writeFile } = require('./fileManager');
+const dotenv = require('dotenv');
+dotenv.config();
 
+const connectDB = require('./config/db');
+const productManager = require('./DAO/productManager');
+const cartManager = require('./DAO/CartManager'); 
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+const PORT = 8080;
+
+// ---------------------------
+// MIDDLEWARES
+// ---------------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const productsPath = './products.json';
-const cartsPath = './carts.json';
+// Archivos estáticos (para servir JS del frontend)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ---------------------------
-// PRODUCTOS
+// CONEXIÓN A MONGODB Y START
 // ---------------------------
+const startServer = async () => {
+  try {
+    await connectDB();
+    server.listen(PORT, () => {
+      console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Error al iniciar el servidor:', error.message);
+  }
+};
 
-app.get('/api/products', (req, res) => {
-  const products = readFile(productsPath);
+startServer();
+
+// ---------------------------
+// PRODUCTOS (MongoDB)
+// ---------------------------
+app.get('/api/products', async (req, res) => {
+  const products = await productManager.getAll();
   res.json(products);
 });
 
-app.get('/api/products/:pid', (req, res) => {
-  const products = readFile(productsPath);
-  const product = products.find(p => p.id == req.params.pid);
+app.get('/api/products/:pid', async (req, res) => {
+  const product = await productManager.getById(req.params.pid);
   if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
   res.json(product);
 });
 
-app.post('/api/products', (req, res) => {
-  const products = readFile(productsPath);
-  const newId = products.length ? products[products.length - 1].id + 1 : 1;
-  const newProduct = {
-    id: newId,
-    ...req.body
-  };
-  products.push(newProduct);
-  writeFile(productsPath, products);
-
-  io.emit('updateProducts', products);
-
+app.post('/api/products', async (req, res) => {
+  const newProduct = await productManager.create(req.body);
+  io.emit('updateProducts', await productManager.getAll());
   res.status(201).json(newProduct);
 });
 
-app.put('/api/products/:pid', (req, res) => {
-  const products = readFile(productsPath);
-  const index = products.findIndex(p => p.id == req.params.pid);
-  if (index === -1) return res.status(404).json({ error: 'Producto no encontrado' });
-
-  products[index] = { ...products[index], ...req.body, id: products[index].id };
-  writeFile(productsPath, products);
-  res.json(products[index]);
+app.put('/api/products/:pid', async (req, res) => {
+  const updated = await productManager.update(req.params.pid, req.body);
+  if (!updated) return res.status(404).json({ error: 'Producto no encontrado' });
+  res.json(updated);
 });
 
-app.delete('/api/products/:pid', (req, res) => {
-  const products = readFile(productsPath);
-  const updated = products.filter(p => p.id != req.params.pid);
-  writeFile(productsPath, updated);
-
-  io.emit('updateProducts', updated);
-
+app.delete('/api/products/:pid', async (req, res) => {
+  const deleted = await productManager.delete(req.params.pid);
+  if (!deleted) return res.status(404).json({ error: 'Producto no encontrado' });
+  io.emit('updateProducts', await productManager.getAll());
   res.status(204).end();
 });
 
 // ---------------------------
-// CARRITOS
+// CARRITOS (MongoDB)
 // ---------------------------
-
-app.post('/api/carts', (req, res) => {
-  const carts = readFile(cartsPath);
-  const newId = carts.length ? carts[carts.length - 1].id + 1 : 1;
-  const newCart = { id: newId, products: [] };
-  carts.push(newCart);
-  writeFile(cartsPath, carts);
+app.post('/api/carts', async (req, res) => {
+  const newCart = await cartManager.createCart();
   res.status(201).json(newCart);
 });
 
-app.get('/api/carts/:cid', (req, res) => {
-  const carts = readFile(cartsPath);
-  const cart = carts.find(c => c.id == req.params.cid);
+app.get('/api/carts/:cid', async (req, res) => {
+  const cart = await cartManager.getCartById(req.params.cid);
   if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
   res.json(cart.products);
 });
 
-app.post('/api/carts/:cid/product/:pid', (req, res) => {
-  const carts = readFile(cartsPath);
-  const cartIndex = carts.findIndex(c => c.id == req.params.cid);
-  if (cartIndex === -1) return res.status(404).json({ error: 'Carrito no encontrado' });
-
-  const cart = carts[cartIndex];
-  const existing = cart.products.find(p => p.product == req.params.pid);
-
-  if (existing) {
-    existing.quantity++;
-  } else {
-    cart.products.push({ product: parseInt(req.params.pid), quantity: 1 });
-  }
-
-  carts[cartIndex] = cart;
-  writeFile(cartsPath, carts);
+app.post('/api/carts/:cid/product/:pid', async (req, res) => {
+  const cart = await cartManager.addProductToCart(req.params.cid, req.params.pid);
+  if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
   res.json(cart);
 });
 
 // ---------------------------
 // HANDLEBARS
 // ---------------------------
-
 app.engine('handlebars', exphbs.engine());
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
 // ---------------------------
-// WEBSOCKET
+// WEBSOCKETS
 // ---------------------------
-
-const http = require('http');
-const server = http.createServer(app);
-const { Server } = require('socket.io');
-io = new Server(server);
-
 io.on('connection', (socket) => {
   console.log('Cliente conectado:', socket.id);
+
+  socket.on('nuevoProducto', async (producto) => {
+    await productManager.create(producto);
+    const productosActualizados = await productManager.getAll();
+    io.emit('updateProducts', productosActualizados);
+  });
+
+  socket.on('eliminarProducto', async (id) => {
+    await productManager.delete(id);
+    const productosActualizados = await productManager.getAll();
+    io.emit('updateProducts', productosActualizados);
+  });
 });
 
 // ---------------------------
-// RUTAS VISTAS
+// VISTAS
 // ---------------------------
-
-app.get('/home', (req, res) => {
-  const products = readFile(productsPath);
+app.get('/home', async (req, res) => {
+  const products = await productManager.getAll();
   res.render('home', { titulo: 'Lista de Productos:', products });
 });
 
-app.get('/realtimeproducts', (req, res) => {
-  const products = readFile(productsPath);
+app.get('/realtimeproducts', async (req, res) => {
+  const products = await productManager.getAll();
   res.render('realTimeProducts', { products });
 });
 
-// ---------------------------
-// INICIO
-// ---------------------------
 
-server.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+
+
