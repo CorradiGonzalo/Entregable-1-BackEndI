@@ -21,6 +21,7 @@
   "homepage": "https://github.com/CorradiGonzalo/Entregable-1-BackEndI#readme",
   "dependencies": {
     "dotenv": "^17.2.0",
+    "express": "^5.1.0",
     "express-handlebars": "^8.0.3",
     "mongoose": "^8.16.4",
     "socket.io": "^4.8.1"
