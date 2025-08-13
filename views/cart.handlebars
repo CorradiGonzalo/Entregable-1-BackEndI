@@ -1,0 +1,80 @@
+<h1>Carrito</h1>
+
+{{#if items.length}}
+  <table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Precio</th>
+        <th>Cant.</th>
+        <th>Subtotal</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each items}}
+        <tr>
+          <td>{{this.product.title}}</td>
+          <td>$ {{this.product.price}}</td>
+          <td>
+            <input type="number" min="1" value="{{this.quantity}}" data-pid="{{this.product._id}}" class="qty" />
+          </td>
+          <td>$ {{this.subtotal}}</td>
+          <td>
+            <button class="btn ghost rm" data-pid="{{this.product._id}}">Eliminar</button>
+          </td>
+        </tr>
+      {{/each}}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" style="text-align:right;"><strong>Total</strong></td>
+        <td colspan="2"><strong>$ {{total}}</strong></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="row" style="margin-top:12px;">
+    <button id="btnVaciar" class="btn ghost">Vaciar carrito</button>
+    <a class="btn ghost" href="/products">Seguir comprando</a>
+  </div>
+{{else}}
+  <p class="muted">Tu carrito está vacío.</p>
+  <a class="btn ghost" href="/products">Ver productos</a>
+{{/if}}
+
+<script>
+  const cid = '{{cartId}}';
+
+  // Cambiar cantidad
+  document.querySelectorAll('.qty').forEach(input => {
+    input.addEventListener('change', async () => {
+      const pid = input.getAttribute('data-pid');
+      const q = Number(input.value || 1);
+      const resp = await fetch(`/api/carts/${cid}/products/${pid}`, {
+        method: 'PUT',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ quantity: q })
+      });
+      if (resp.ok) location.reload();
+      else alert('Error actualizando cantidad');
+    });
+  });
+
+  // Eliminar producto
+  document.querySelectorAll('.rm').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const pid = btn.getAttribute('data-pid');
+      const resp = await fetch(`/api/carts/${cid}/products/${pid}`, { method: 'DELETE' });
+      if (resp.ok) location.reload();
+      else alert('Error eliminando producto');
+    });
+  });
+
+  // Vaciar carrito
+  document.getElementById('btnVaciar')?.addEventListener('click', async () => {
+    const resp = await fetch(`/api/carts/${cid}`, { method: 'DELETE' });
+    if (resp.ok) location.reload();
+    else alert('Error al vaciar carrito');
+  });
+</script>
