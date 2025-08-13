@@ -2,28 +2,29 @@
   "name": "entregable",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+  "keywords": [],
+  "homepage": "https://github.com/CorradiGonzalo/Entregable-1-BackEndI#readme",
+  "bugs": {
+    "url": "https://github.com/CorradiGonzalo/Entregable-1-BackEndI/issues"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CorradiGonzalo/Entregable-1-BackEndI.git"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
+  "author": "",
   "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/CorradiGonzalo/Entregable-1-BackEndI/issues"
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
-  "homepage": "https://github.com/CorradiGonzalo/Entregable-1-BackEndI#readme",
   "dependencies": {
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "express-handlebars": "^8.0.3",
     "mongoose": "^8.16.4",
     "socket.io": "^4.8.1"
-  }
+  },
+  "devDependencies": {}
 }

@@ -1,32 +1,94 @@
-<h1>Agregar producto</h1>
-
+<h2>Agregar producto</h2>
 <form id="productForm">
-  <label>Nombre:</label>
-  <input type="text" name="title" required>
+  <input type="text" name="title" placeholder="Título" required>
+  <input type="text" name="description" placeholder="Descripción" required>
+  <input type="text" name="code" placeholder="Código" required>
+  <input type="number" name="price" placeholder="Precio" step="0.01" required>
+  
+  <label>Estado:</label>
+  <select name="status" required>
+    <option value="true">Activo</option>
+    <option value="false">Inactivo</option>
+  </select>
 
-  <label>Precio:</label>
-  <input type="number" name="price" required>
-
+  <input type="number" name="stock" placeholder="Stock" required>
+  <input type="text" name="category" placeholder="Categoría" required>
+  
   <button type="submit">Agregar</button>
 </form>
 
-<h3>Eliminar producto</h3>
+<h2>Eliminar producto</h2>
 <form id="deleteForm">
-  <label>ID del producto:</label>
-  <input type="text" name="id" required>
+  <input type="text" name="id" placeholder="ID del producto" required>
   <button type="submit">Eliminar</button>
 </form>
 
-<h2>Productos existentes:</h2>
 <ul id="product-list">
   {{#each products}}
     <li>
-      <strong>{{this._id}}</strong> - {{this.title}} - ${{this.price}}
+      <strong>{{this._id}}</strong> - {{this.title}} - ${{this.price}} - Stock: {{this.stock}}
+      {{#if this.category}} ({{this.category}}){{/if}}
+      {{#if this.status}} ✅{{else}} ❌{{/if}}
     </li>
   {{/each}}
 </ul>
 
-<!-- Carga de Socket.IO + script externo -->
 <script src="/socket.io/socket.io.js"></script>
-<script src="/js/realTime.js"></script>
+<script>
+  const socket = io();
+
+  // Crear producto
+  document.getElementById('productForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const product = Object.fromEntries(formData.entries());
+
+    // Ajustar tipos de datos
+    product.price = parseFloat(product.price);
+    product.stock = parseInt(product.stock);
+    product.status = (product.status === 'true');
+
+    const response = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product)
+    });
+
+    if (response.ok) {
+      e.target.reset();
+    } else {
+      const errorData = await response.json().catch(()=>({}));
+      console.error('Error al agregar producto:', errorData);
+      alert('Error al agregar producto. Revisa los campos.');
+    }
+  });
+
+  // Eliminar producto
+  document.getElementById('deleteForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = new FormData(e.target).get('id');
+    const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    if (response.ok) {
+      e.target.reset();
+    } else {
+      alert('Error al eliminar producto. Verifica el ID.');
+    }
+  });
+
+  // Actualización en tiempo real
+  socket.on('updateProducts', (products) => {
+    const list = document.getElementById('product-list');
+    list.innerHTML = '';
+    products.forEach(prod => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${prod._id}</strong> - ${prod.title} - $${prod.price} - Stock: ${prod.stock} 
+        ${prod.category ? '(' + prod.category + ')' : ''} 
+        ${prod.status ? '✅' : '❌'}`;
+      list.appendChild(li);
+    });
+  });
+</script>
+
+
+
 

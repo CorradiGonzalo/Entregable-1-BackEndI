@@ -3,8 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <title>{{titulo}}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; }
+    header { background:#111; color:#fff; padding:12px 16px; }
+    header nav a { color:#fff; margin-right:12px; text-decoration:none; }
+    main { padding: 16px; }
+    .row { display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
+    .right { margin-left:auto; }
+    button, input, select { padding:6px 8px; }
+    .btn { cursor:pointer; }
+    .btn.primary { background:#0d6efd; color:#fff; border:none; }
+    .btn.ghost { background:transparent; border:1px solid #ccc; }
+  </style>
 </head>
 <body>
-  {{{body}}}
+  <header>
+    <nav class="row">
+      <a href="/home">Home</a>
+      <a href="/realtimeproducts">Tiempo Real</a>
+      <a href="#" id="linkCart">Mi Carrito</a>
+    </nav>
+  </header>
+
+  <main>
+    {{{body}}}
+  </main>
+
+  <script>
+    // Manejo de cartId en localStorage
+    window.CartStore = {
+      get() { return localStorage.getItem('cartId') || ''; },
+      set(id) { localStorage.setItem('cartId', id); },
+      async ensure() {
+        let id = this.get();
+        if (!id) {
+          const resp = await fetch('/api/carts', { method: 'POST' });
+          const data = await resp.json();
+          id = data?.payload?._id || data?._id;
+          if (id) this.set(id);
+        }
+        return id;
+      }
+    };
+
+    document.getElementById('linkCart')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const cid = await window.CartStore.ensure();
+      location.href = `/carts/${cid}`;
+    });
+  </script>
 </body>
 </html>
+
+

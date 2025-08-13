@@ -5,6 +5,16 @@ class productManager {
     return await Product.find();
   }
 
+  async getAllFiltered(filters) {
+    
+    return Product.find(filters);
+  }
+
+  async countFiltered(filters) {
+    
+    return Product.countDocuments(filters);
+  }
+
   async getById(id) {
     return await Product.findById(id);
   }
@@ -23,3 +33,4 @@ class productManager {
 }
 
 module.exports = new productManager();
+

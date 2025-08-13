@@ -6,7 +6,12 @@ form.addEventListener('submit', async (e) => {
   const formData = new FormData(form);
   const product = {
     title: formData.get('title'),
-    price: formData.get('price')
+    description: formData.get('description'),
+    code: formData.get('code'),
+    price: parseFloat(formData.get('price')),
+    status: formData.get('status') === 'true', // asumiendo que en el form es 'true' o 'false'
+    stock: parseInt(formData.get('stock')),
+    category: formData.get('category')
   };
 
   const response = await fetch('/api/products', {
@@ -17,6 +22,10 @@ form.addEventListener('submit', async (e) => {
 
   if (response.ok) {
     form.reset();
+  } else {
+    const errorData = await response.json();
+    console.error('Error al agregar producto:', errorData);
+    alert('Error al agregar producto. Revisa los campos.');
   }
 });
 
@@ -33,6 +42,8 @@ deleteForm.addEventListener('submit', async (e) => {
 
   if (response.ok) {
     deleteForm.reset();
+  } else {
+    alert('Error al eliminar producto. Verifica el ID.');
   }
 });
 
@@ -42,7 +53,8 @@ socket.on('updateProducts', (products) => {
   list.innerHTML = '';
   products.forEach(prod => {
     const li = document.createElement('li');
-    li.innerHTML = `<strong>${prod._id}</strong> - ${prod.title} - $${prod.price}`;
+    li.innerHTML = `<strong>${prod._id}</strong> - ${prod.title} - $${prod.price} - Stock: ${prod.stock}`;
     list.appendChild(li);
   });
 });
+

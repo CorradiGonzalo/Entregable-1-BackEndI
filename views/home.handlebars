@@ -1,21 +1,89 @@
-<h1>Lista de productos</h1>
+<h1>{{titulo}}</h1>
 
-<ul>
+<!-- Toolbar de filtros, orden y paginación -->
+<form class="row" id="filtersForm" method="GET" action="">
+  <label>Query:</label>
+  <input type="text" name="query" placeholder="category:drills | status:true" value="{{q_query}}">
+  
+  <label>Orden:</label>
+  <select name="sort" id="sortSelect">
+    <option value="">Sin orden</option>
+    <option value="asc">Precio ↑</option>
+    <option value="desc">Precio ↓</option>
+  </select>
+
+  <label>Limit:</label>
+  <input type="number" min="1" max="100" name="limit" value="{{q_limit}}">
+
+  <button class="btn primary" type="submit">Aplicar</button>
+</form>
+
+<hr>
+
+<!-- Lista de productos -->
+<ul id="listaProductos">
   {{#each products}}
-    <li>{{this.title}} - ${{this.price}}</li>
+    <li class="row" style="gap:12px; margin:8px 0;">
+      <div style="min-width:260px;">
+        <strong>{{this.title}}</strong>
+        {{#if this.category}}<span class="tag" style="margin-left:6px; font-size:12px; padding:2px 6px; background:#eee; border-radius:999px;">{{this.category}}</span>{{/if}}
+        {{#if this.status}}
+          <span class="tag" style="margin-left:6px; font-size:12px; padding:2px 6px; background:#e6ffe6; border-radius:999px;">disponible</span>
+        {{else}}
+          <span class="tag" style="margin-left:6px; font-size:12px; padding:2px 6px; background:#ffe6e6; border-radius:999px;">sin stock</span>
+        {{/if}}
+        <div class="muted">{{this.description}}</div>
+      </div>
+      <div>
+        <div><strong>$ {{this.price}}</strong></div>
+        <div class="muted">Stock: {{this.stock}}</div>
+      </div>
+      <div class="row">
+        <button class="btn primary" data-action="add" data-pid="{{this._id}}">Agregar al carrito</button>
+      </div>
+    </li>
   {{/each}}
 </ul>
 
-<h2>Agregar producto</h2>
-<form action="/api/products" method="POST">
-  <label for="title">Título:</label>
-  <input type="text" name="title" id="title" required>
+<!-- Paginación -->
+<div class="pagination">
+  {{#if hasPrevPage}}<a class="btn ghost" href="{{prevLink}}">⬅️ Anterior</a>{{/if}}
+  <span>Página {{page}} de {{totalPages}}</span>
+  {{#if hasNextPage}}<a class="btn ghost" href="{{nextLink}}">Siguiente ➡️</a>{{/if}}
+</div>
 
-  <label for="price">Precio:</label>
-  <input type="number" name="price" id="price" required>
+<script>
+  // Seleccionar opción de sort desde el servidor (evitamos helpers de igualdad)
+  (function initSort() {
+    var sel = document.getElementById('sortSelect');
+    if (sel) sel.value = '{{q_sort}}';
+  })();
 
-  <button type="submit">Agregar</button>
-</form>
+  // Agregar al carrito
+  document.addEventListener('click', async function(e) {
+    var btn = e.target.closest('button[data-action="add"]');
+    if (!btn) return;
+
+    try {
+      // Obtener/crear carrito (usa helper global definido en main.handlebars)
+      var cid = await window.CartStore.ensure();
+
+      var pid = btn.getAttribute('data-pid');
+      var resp = await fetch('/api/carts/' + cid + '/product/' + pid, { method: 'POST' });
+      if (!resp.ok) {
+        var data = {};
+        try { data = await resp.json(); } catch (_){}
+        return alert('Error al agregar: ' + (data.message || resp.statusText));
+      }
+      alert('Producto agregado al carrito ✅');
+    } catch (err) {
+      console.error(err);
+      alert('Ocurrió un error al agregar al carrito');
+    }
+  });
+</script>
+
+
 
 
 
